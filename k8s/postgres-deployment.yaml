@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+# Object type
+kind: Deployment
+# name of Object
+metadata:
+  name: postgres-deployment
+spec:
+  # number of pods from template -you should never have 2 DB's running on the same volume without them being aware of each other
+  replicas: 1
+  # this object will look for this specific selector
+  selector:
+    matchLabels:
+      component: postgres
+  # configuration of pod
+  template:
+    metadata:
+      labels:
+        component: postgres
+    spec:
+      volumes:
+        # k8s will create this volume
+        - name: postgres-storage
+          persistentVolumeClaim:
+            claimName: database-persistent-volume-claim
+      containers:
+        - name: postgres
+          image: postgres
+          ports:
+            # port to open the client image
+            - containerPort: 5432
+          volumeMounts:
+            # mount vol created by k8s
+            - name: postgres-storage
+              # data location in the Postgres image / pod to be copied
+              mountPath: /var/lib/postgresql/data
+              # additional option for postgres in particular
+              subPath: postgres
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pgpassword
+                  key: PGPASSWORD

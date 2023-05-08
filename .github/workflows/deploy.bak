@@ -2,7 +2,7 @@ name: Deploy FibApp
 on:
   push:
     branches:
-      - master # check your repo, your default branch might be master!
+      - master # check your repo, your default branch might be main!
 
 jobs:
   build:
@@ -13,15 +13,15 @@ jobs:
       - run: docker build -t giorgiosavron/react-test -f ./client/Dockerfile.dev ./client
       - run: docker run -e CI=true giorgiosavron/react-test npm test
 
-      - run: docker build -t giorgiosavron/fibapp-client ./client
-      - run: docker build -t giorgiosavron/fibapp-nginx ./nginx
-      - run: docker build -t giorgiosavron/fibapp-server ./server
-      - run: docker build -t giorgiosavron/fibapp-worker ./worker
+      - run: docker build -t giorgiosavron/fibapp-client-kub ./client
+      - run: docker build -t giorgiosavron/fibapp-nginx-kub ./nginx
+      - run: docker build -t giorgiosavron/fibapp-server-kub ./server
+      - run: docker build -t giorgiosavron/fibapp-worker-kub ./worker
 
-      - run: docker push giorgiosavron/fibapp-client
-      - run: docker push giorgiosavron/fibapp-nginx
-      - run: docker push giorgiosavron/fibapp-server
-      - run: docker push giorgiosavron/fibapp-worker
+      - run: docker push giorgiosavron/fibapp-client-kub
+      - run: docker push giorgiosavron/fibapp-nginx-kub
+      - run: docker push giorgiosavron/fibapp-server-kub
+      - run: docker push giorgiosavron/fibapp-worker-kub
 
       - name: Generate deployment package
         run: zip -r deploy.zip . -x '*.git*'

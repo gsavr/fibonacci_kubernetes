@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+# Object type
+kind: Deployment
+# name of Object
+metadata:
+  name: client-deployment
+spec:
+  # number of pods from template
+  replicas: 3
+  # this object will look for this specific selector
+  selector:
+    matchLabels:
+      component: web
+  # configuration of pod
+  template:
+    metadata:
+      labels:
+        component: web
+    spec:
+      containers:
+        - name: client
+          image: giorgiosavron/fibapp-client
+          ports:
+            # port to open the client image
+            - containerPort: 3000

@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+# Object type
+kind: Deployment
+# name of Object
+metadata:
+  name: worker-deployment
+spec:
+  # number of pods from template
+  replicas: 1
+  # this object will look for this specific selector
+  selector:
+    matchLabels:
+      component: worker
+  # configuration of pod
+  template:
+    metadata:
+      labels:
+        component: worker
+    spec:
+      containers:
+        - name: server
+          image: giorgiosavron/fibapp-worker
+          env:
+            - name: REDIS_HOST
+              value: redis-cluster-ip-service
+            - name: REDI_PORT
+              value: "6379"
