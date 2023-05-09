@@ -1,0 +1,63 @@
+name: Deploy FibAppK8s
+on:
+  push:
+    branches:
+      - master
+
+env:
+  SHA: $(git rev-parse HEAD)
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Test
+        run: |-
+          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
+          docker build -t giorgiosavron/react-test -f ./client/Dockerfile.dev ./client
+          docker run -e CI=true giorgiosavron/react-test npm test
+
+      - name: Set Service Key
+        uses: "google-github-actions/auth@v0"
+        with:
+          credentials_json: "${{ secrets.GKE_SA_KEY }}"
+
+      - name: Set Project
+        uses: google-github-actions/setup-gcloud@v0
+        with:
+          project_id: fibapp-k8s
+
+      - name: Auth
+        run: |-
+          gcloud --quiet auth configure-docker
+
+      - name: Get Credentials
+        uses: google-github-actions/get-gke-credentials@v0
+        with:
+          cluster_name: fib-app
+          location: us-east1-c
+
+      - name: Build
+        run: |-
+          docker build -t giorgiosavron/fibapp-client-k8s:latest -t giorgiosavron/fibapp-client-k8s:${{ env.SHA }} -f ./client/Dockerfile ./client
+          docker build -t giorgiosavron/fibapp-server-k8s:latest -t giorgiosavron/fibapp-server-k8s:${{ env.SHA }} -f ./server/Dockerfile ./server
+          docker build -t giorgiosavron/fibapp-worker-k8s:latest -t giorgiosavron/fibapp-worker-k8s:${{ env.SHA }} -f ./worker/Dockerfile ./worker
+
+      - name: Push
+        run: |-
+          docker push giorgiosavron/fibapp-client-k8s:latest
+          docker push giorgiosavron/fibapp-server-k8s:latest
+          docker push giorgiosavron/fibapp-worker-k8s:latest
+
+          docker push giorgiosavron/fibapp-client-k8s:${{ env.SHA }}
+          docker push giorgiosavron/fibapp-server-k8s:${{ env.SHA }}
+          docker push giorgiosavron/fibapp-worker-k8s:${{ env.SHA }}
+
+      - name: Apply
+        run: |-
+          kubectl apply -f k8s
+          kubectl set image deployments/server-deployment server=giorgiosavron/fibapp-server-k8s:${{ env.SHA }}
+          kubectl set image deployments/client-deployment client=giorgiosavron/fibapp-client-k8s:${{ env.SHA }}
+          kubectl set image deployments/worker-deployment worker=giorgiosavron/fibapp-worker-k8s:${{ env.SHA }}
