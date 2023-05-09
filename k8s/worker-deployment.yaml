@@ -18,7 +18,7 @@ spec:
         component: worker
     spec:
       containers:
-        - name: server
+        - name: worker
           image: giorgiosavron/fibapp-worker
           env:
             - name: REDIS_HOST
